@@ -1,0 +1,203 @@
+Resources:
+
+  LogPolicy:
+    Type: "AWS::IAM::Policy"
+    DependsOn:
+      - ConnectGWHandlerLambdaRole
+      - DisconnectGWHandlerLambdaRole
+      - AuthHandlerLambdaRole
+    Properties:
+      PolicyName: ${self:custom.values.prefix}-LogPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              - logs:DescribeLogStreams
+            Resource:
+              Fn::Join:
+                - ""
+                - - "arn:aws:logs:"
+                  - Ref: "AWS::Region"
+                  - ":"
+                  - Ref: "AWS::AccountId"
+                  - ":*"
+      Roles:
+        - Ref: ConnectGWHandlerLambdaRole
+        - Ref: DisconnectGWHandlerLambdaRole
+        - Ref: AuthHandlerLambdaRole
+
+  ConnectionPolicy:
+    Type: "AWS::IAM::Policy"
+    DependsOn:
+      - ConnectGWHandlerLambdaRole
+      - DisconnectGWHandlerLambdaRole
+      - EcsTaskRole
+    Properties:
+      PolicyName: ${self:custom.values.prefix}-ConnectPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - execute-api:ManageConnections
+            Resource:
+              Fn::Join:
+                - ""
+                - - "arn:aws:execute-api:"
+                  - Ref: "AWS::Region"
+                  - ":"
+                  - Ref: "AWS::AccountId"
+                  - ":**/@connections/*"
+      Roles:
+        - Ref: ConnectGWHandlerLambdaRole
+        - Ref: DisconnectGWHandlerLambdaRole
+        - Ref: EcsTaskRole
+
+  ConnectGWHandlerLambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: ${self:custom.values.prefix}-ConnectGWHandlerLambdaRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: ${self:custom.values.prefix}-CognitoGetUserPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - cognito-idp:AdminGetUser
+                Resource:
+                  - Fn::GetAtt: [ AuthCognitoUserPool, Arn ]
+
+  DisconnectGWHandlerLambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: ${self:custom.values.prefix}-DisonnectGWHandlerLambdaRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+
+  EcsExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: ${self:custom.values.prefix}-EcsExecutionRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: ${self:custom.values.prefix}-EcsExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ecr:GetAuthorizationToken"
+                  - "ecr:BatchCheckLayerAvailability"
+                  - "ecr:GetDownloadUrlForLayer"
+                  - "ecr:BatchGetImage"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: "*"
+
+  EcsTaskRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: ${self:custom.values.prefix}-EcsTaskRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: ${self:custom.values.prefix}-EcsExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:PutObject"
+                  - "s3:PutBucketPublicAccessBlock"
+                  - "s3:PutObjectAcl"
+                  - "s3:PutObjectTagging"
+                Resource:
+                  - Fn::Join:
+                      - ''
+                      - - Fn::GetAtt:
+                            - SiteBucket
+                            - Arn
+                        - '/*'
+              - Effect: Allow
+                Action:
+                  - "cognito-idp:AdminCreateUser"
+                  - "cognito-idp:AdminDisableUser"
+                  - "cognito-idp:AdminDeleteUser"
+                  - "cognito-idp:AdminEnableUser"
+                Resource:
+                  Fn::GetAtt:
+                    - AuthCognitoUserPool
+                    - Arn
+
+  AuthHandlerLambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: ${self:custom.values.prefix}-AuthHandlerLambdaRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+
+Outputs:
+
+  ConnectGWHandlerLambdaRoleArn:
+    Description: "Connection handler Lambda Role ARN"
+    Value:
+      Fn::GetAtt: [ ConnectGWHandlerLambdaRole, Arn ]
+    Export:
+      Name: ${self:custom.values.prefix}-connect-gw-lambda-role-arn
+
+  DisconnectGWHandlerLambdaRoleArn:
+    Description: "Disconnection handler Lambda Role ARN"
+    Value:
+      Fn::GetAtt: [ DisconnectGWHandlerLambdaRole, Arn ]
+    Export:
+      Name: ${self:custom.values.prefix}-disconnect-gw-lambda-role-arn
+
+  AuthHandlerLambdaRoleArn:
+    Description: "Auth handler Lambda Role ARN"
+    Value:
+      Fn::GetAtt: [ AuthHandlerLambdaRole, Arn ]
+    Export:
+      Name: ${self:custom.values.prefix}-auth-lambda-role-arn

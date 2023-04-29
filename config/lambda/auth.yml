@@ -1,0 +1,62 @@
+functions:
+
+  preSignIn:
+    handler: src/auth/pre-login.handler
+    events:
+      - cognitoUserPool:
+          pool: ${self:custom.values.prefix}-UserPool
+          trigger: PreAuthentication
+          existing: true
+
+  preSignUp:
+    handler: src/auth/pre-sign-up.handler
+    environment:
+      DB_URL: maybebaby-pgdb-instance.cnkm4exom8je.us-east-1.rds.amazonaws.com
+      DB_USER: ${self:custom.db.username}
+      DB_PASSWORD: ${self:custom.db.password}
+      DB_NAME: ${self:custom.db.name}
+    events:
+      - cognitoUserPool:
+          pool: ${self:custom.values.prefix}-UserPool
+          trigger: PreSignUp
+          existing: true
+
+  postSignUp:
+    handler: src/auth/post-sign-up.handler
+    environment:
+      DB_URL: maybebaby-pgdb-instance.cnkm4exom8je.us-east-1.rds.amazonaws.com
+      DB_USERNAME: ${self:custom.db.username}
+      DB_PASSWORD: ${self:custom.db.password}
+      DB_NAME: ${self:custom.db.name}
+    events:
+      - cognitoUserPool:
+          pool: ${self:custom.values.prefix}-UserPool
+          trigger: PostConfirmation
+          existing: true
+
+  createAuthChallenge:
+    handler: src/auth/create-auth-challenge.handler
+    environment:
+      MOCK: ${env:MOCK, 'false'}
+    events:
+      - cognitoUserPool:
+          pool: ${self:custom.values.prefix}-UserPool
+          trigger: CreateAuthChallenge
+          existing: true
+
+  verifyAuthChallenge:
+    handler: src/auth/verify-auth-challenge.handler
+    events:
+      - cognitoUserPool:
+          pool: ${self:custom.values.prefix}-UserPool
+          trigger: VerifyAuthChallengeResponse
+          existing: true
+
+  defineAuthChallenge:
+    handler: src/auth/define-auth-challenge.handler
+    events:
+      - cognitoUserPool:
+          pool: ${self:custom.values.prefix}-UserPool
+          trigger: DefineAuthChallenge
+          existing: true
+

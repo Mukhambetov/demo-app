@@ -1,0 +1,107 @@
+Resources:
+
+  EcsCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: ${self:custom.values.prefix}-Cluster
+      Tags:
+        - Key: Context
+          Value: ${self:custom.values.prefix}
+
+  EcsService:
+    Type: AWS::ECS::Service
+    DependsOn: Listener
+    Properties:
+      Cluster:
+        Ref: EcsCluster
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+      DesiredCount: 1
+#      HealthCheckGracePeriodSeconds: 5
+      LaunchType: FARGATE
+      LoadBalancers:
+        - ContainerName: ${self:custom.values.prefix}
+          ContainerPort: 8080
+          TargetGroupArn:
+            Ref: TargetGroup
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - Ref: EcsSubnet1
+            - Ref: EcsSubnet2
+          SecurityGroups:
+            - Ref: EcsSecurityGroup
+      TaskDefinition:
+        Ref: EcsTask
+      ServiceName: ${self:custom.values.prefix}-Service
+#      Role: !Ref Role
+      Tags:
+        - Key: Context
+          Value: ${self:custom.values.prefix}
+
+  EcsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Join:
+          - ''
+          - - '/ecs/'
+            - ${self:custom.values.prefix}
+
+  EcsTask:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: EcsLogGroup
+    Properties:
+      ContainerDefinitions:
+        - Name: ${self:custom.values.prefix}
+          Image:
+            Fn::Join:
+             - ''
+             - - Ref: AWS::AccountId
+               - .dkr.ecr.us-east-1.amazonaws.com/
+               - Ref: ImageRepository
+               - ':latest'
+          Cpu: '1'
+          Environment:
+            - Name: LOG_LEVEL
+              Value: debug
+            - Name: DB_URL
+              Value:
+                Fn::GetAtt:
+                  - PGDBInstance
+                  - Endpoint.Address
+            - Name: DB_USERNAME
+              Value: ${self:custom.db.username}
+            - Name: DB_PASSWORD
+              Value: ${self:custom.db.password}
+            - Name: DB_NAME
+              Value: ${self:custom.db.name}
+            - Name: S3_BUCKET
+              Value: assets.${self:custom.values.host}
+            - Name: USER_POOL
+              Value:
+                Ref: AuthCognitoUserPool
+          Essential: true
+          PortMappings:
+            - ContainerPort: 8080
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: ${env:AWS_REGION}
+              awslogs-group:
+                Ref: EcsLogGroup
+              awslogs-stream-prefix: ecs
+      Cpu: 256
+      Memory: 512
+      NetworkMode: awsvpc
+      ExecutionRoleArn:
+        Ref: EcsExecutionRole
+      TaskRoleArn:
+        Ref: EcsTaskRole
+      RequiresCompatibilities:
+        - FARGATE
+      Tags:
+        - Key: Context
+          Value: ${self:custom.values.prefix}

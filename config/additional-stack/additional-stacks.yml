@@ -1,0 +1,7 @@
+additionalStacks:
+
+  permanent:
+
+    Resources: ${file(config/additional-stack/additional-stacks.${opt:stage, env:AWS_STAGE}.merged.yml):Resources}
+
+    Outputs: ${file(config/additional-stack/additional-stacks.${opt:stage, env:AWS_STAGE}.merged.yml):Outputs}

@@ -1,0 +1,14 @@
+version: '3'
+services:
+
+  postgres:
+#    image: gangstead/postgis:13-3.1-arm
+    image: mdillon/postgis
+    restart: on-failure
+    container_name: postgresql.bike-sharing.local
+    environment:
+      POSTGRES_DB: bike
+      POSTGRES_USER: master
+      POSTGRES_PASSWORD: master
+    ports:
+      - 5432:5432

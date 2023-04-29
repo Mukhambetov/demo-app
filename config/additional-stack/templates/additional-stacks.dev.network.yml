@@ -1,0 +1,194 @@
+Resources:
+
+  EcsVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: ${self:custom.vpc.cidr}
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
+      - Key: Context
+        Value: ${self:custom.values.prefix}
+      - Key: Name
+        Value: ${self:custom.values.prefix} VPC
+
+  EcsSubnet1:
+    Type: AWS::EC2::Subnet
+    DependsOn:
+      - EcsVpc
+    Properties:
+      VpcId:
+        Ref: EcsVpc
+      CidrBlock: ${self:custom.vpc.ecsSubnet1}
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs: ""
+      Tags:
+      - Key: Context
+        Value: ${self:custom.values.prefix}
+      - Key: Name
+        Value: ${self:custom.values.prefix} Ecs Subnet 1
+
+  EcsSubnet2:
+    Type: AWS::EC2::Subnet
+    DependsOn:
+      - EcsVpc
+    Properties:
+      VpcId:
+        Ref: EcsVpc
+      CidrBlock: ${self:custom.vpc.ecsSubnet2}
+      AvailabilityZone:
+        Fn::Select:
+          - 1
+          - Fn::GetAZs: ""
+      Tags:
+        - Key: Context
+          Value: ${self:custom.values.prefix}
+        - Key: Name
+          Value: ${self:custom.values.prefix} Ecs Subnet 2
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Context
+        Value: ${self:custom.values.prefix}
+      - Key: Name
+        Value: ${self:custom.values.prefix} IG
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    DependsOn:
+      - EcsVpc
+      - InternetGateway
+    Properties:
+      VpcId:
+        Ref: EcsVpc
+      InternetGatewayId:
+        Ref: InternetGateway
+
+  EcsRouteTable:
+    Type: AWS::EC2::RouteTable
+    DependsOn:
+      - AttachGateway
+    Properties:
+      VpcId:
+        Ref: EcsVpc
+      Tags:
+      - Key: Name
+        Value: ${self:custom.values.prefix} Ecs Route Table
+      - Key: Context
+        Value: ${self:custom.values.prefix}
+
+  EcsSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - EcsSubnet1
+      - EcsRouteTable
+    Properties:
+      SubnetId:
+        Ref: EcsSubnet1
+      RouteTableId:
+        Ref: EcsRouteTable
+
+  EcsSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - EcsSubnet2
+      - EcsRouteTable
+    Properties:
+      SubnetId:
+        Ref: EcsSubnet2
+      RouteTableId:
+        Ref: EcsRouteTable
+
+  EcsRoute:
+    Type: AWS::EC2::Route
+    DependsOn:
+      - EcsSubnet1
+      - EcsSubnet2
+      - EcsRouteTable
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId:
+        Ref: EcsRouteTable
+      GatewayId:
+        Ref: InternetGateway
+
+  EcsSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    DependsOn:
+      - EcsVpc
+    Properties:
+      GroupDescription: "SG for ECS"
+      VpcId:
+        Ref: EcsVpc
+      SecurityGroupIngress:
+      - IpProtocol: '-1'
+        CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Context
+          Value: ${self:custom.values.prefix}
+        - Key: Name
+          Value: ${self:custom.values.prefix} Ecs SG
+
+  CamundaSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    DependsOn:
+      - EcsVpc
+    Properties:
+      GroupDescription: "SG for Camunda"
+      VpcId:
+        Ref: EcsVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8087
+          ToPort: 8087
+          CidrIp: ${self:custom.vpc.cidr}
+      Tags:
+        - Key: Context
+          Value: ${self:custom.values.prefix}
+        - Key: Name
+          Value: ${self:custom.values.prefix} Camunda SG
+
+  PGDBSubnetGroup:
+    Type: "AWS::RDS::DBSubnetGroup"
+    DependsOn:
+      - EcsSubnet1
+      - EcsSubnet2
+    Properties:
+      DBSubnetGroupName: ${self:custom.values.prefix}-PGDBSubnetGroup
+      DBSubnetGroupDescription: "description"
+      SubnetIds:
+        - Ref: EcsSubnet1
+        - Ref: EcsSubnet2
+      Tags:
+        - Key: Context
+          Value: ${self:custom.values.prefix}
+        - Key: Name
+          Value: ${self:custom.values.prefix} PGDB Subnet Group
+
+  PGDBSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    DependsOn:
+      - EcsVpc
+    Properties:
+      GroupDescription: "SG for public access to RDSInstance"
+      VpcId:
+        Ref: EcsVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: ${self:custom.db.port}
+          ToPort: ${self:custom.db.port}
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Context
+          Value: ${self:custom.values.prefix}
+        - Key: Name
+          Value: ${self:custom.values.prefix} RDS SG
+
+
+
+

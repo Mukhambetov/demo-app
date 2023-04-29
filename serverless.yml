@@ -1,0 +1,85 @@
+service: maybebaby
+variablesResolutionMode: 20210326
+# Add the serverless-webpack plugin
+plugins:
+  - serverless-stack-output
+  - serverless-plugin-additional-stacks
+  - serverless-plugin-split-stacks
+  - serverless-webpack
+#  - serverless-s3-sync
+
+package:
+  exclude:
+    - .idea/**
+    - .git/**
+    - .babelrc
+    - .editorconfig
+    - .eslintrc
+    - .gitattributes
+    - .gitignore
+    - .env
+  excludeDevDependencies: true
+  individually: true
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  memorySize: 128
+  timeout: 15
+  versionFunctions: false
+  websocketsApiName: ${self:custom.values.prefix}-websocket-api
+  websocketsApiRouteSelectionExpression: $request.body.action
+  stackTags:
+    CONTEXT: ${self:custom.context}
+    STAGE: ${self:custom.stage}
+  environment:
+    LOG_LEVEL: ${self:custom.logLevel.prod}
+
+custom:
+  context: ${env:CONTEXT}
+  stage: ${opt:stage, env:AWS_STAGE}
+  domain: ${env:DOMAIN}
+  logLevel:
+    prod: debug
+    dev: debug
+  serverPort: '8080'
+  # Databse
+  db:
+    name: ${env:DB_NAME}
+    engine: postgres
+    engineVersion: "11.15"
+    username: ${env:DB_USERNAME}
+    password: ${env:DB_PASSWORD}
+    port: 5432
+  vpc:
+    cidr: 10.0.0.0/16
+    ecsSubnet1: 10.0.0.0/24
+    ecsSubnet2: 10.0.1.0/24
+  values: ${file(./config/sls.js)}
+  additionalStacks: ${file(./config/additional-stack/additional-stacks.yml):additionalStacks}
+  # Split stack settings
+  splitStacks:
+    perFunction: true
+    perType: false
+  webpack:
+    webpackConfig: 'webpack.config.js'
+    packager: 'npm'
+    includeModules:
+      forceInclude:
+        - pg
+      forceExclude:
+        - aws-sdk
+  s3Sync:
+    - bucketName: ${self:custom.values.host}
+      localDir: dist
+      acl: public-read
+      followSymlinks: true
+      defaultContentType: text/html
+      params:
+        - index.html:
+            CacheControl: 'no-cache'
+        - "*.js":
+            CacheControl: 'public, max-age=31536000'
+functions:
+  - ${file(./config/lambda/auth.yml):functions}
+#  - ${file(./config/lambda/socket.yml):functions}

@@ -1,0 +1,56 @@
+functions:
+
+  disconnectHandler:
+    handler: src/socket/disconnect.handler
+    role: {"Fn::ImportValue": "{self:custom.values.prefix}-disconnect-gw-lambda-role-arn"}
+    environment:
+      DB_URL: { "Fn::ImportValue": "{self:custom.values.prefix}-pgdb-uri" }
+      DB_USERNAME: {self:custom.db.username}
+      DB_PASSWORD: {self:custom.db.password}
+      DB_NAME: {self:custom.db.name}
+    events:
+      - websocket:
+          route: $disconnect
+
+  defaultHandler:
+    handler: src/socket/default.handler
+    events:
+      - websocket:
+          route: $default
+
+  connectHandler:
+    handler: src/socket/connect.handler
+    role: {"Fn::ImportValue": "{self:custom.values.prefix}-connect-gw-lambda-role-arn"}
+    environment:
+      DB_URL: { "Fn::ImportValue": "{self:custom.values.prefix}-pgdb-uri" }
+      DB_USERNAME: {self:custom.db.username}
+      DB_PASSWORD: {self:custom.db.password}
+      DB_NAME: {self:custom.db.name}
+      USER_POOL_ID:
+        Fn::ImportValue: "{self:custom.values.prefix}-auth-pool-group-id"
+    events:
+      - websocket:
+          route: $connect
+          authorizer:
+            name: auth
+            identitySource:
+              - 'route.request.querystring.Auth'
+
+  auth:
+    handler: src/auth/authorizer.handler
+    role: {"Fn::ImportValue": "{self:custom.values.prefix}-auth-lambda-role-arn"}
+    environment:
+      USER_POOL_ID:
+        Fn::ImportValue: "{self:custom.values.prefix}-auth-pool-group-id"
+
+  messageQueueHandler:
+    handler: src/queue/message.handler
+    role: {"Fn::ImportValue": "{self:custom.values.prefix}-message-queue-lambda-role-arn"}
+    environment:
+      DB_URL: {"Fn::ImportValue": "{self:custom.values.prefix}-pgdb-uri"}
+      DB_USERNAME: {self:custom.db.username}
+      DB_PASSWORD: {self:custom.db.password}
+      DB_NAME: {self:custom.db.name}
+    events:
+      - sqs:
+          arn: {"Fn::ImportValue": "{self:custom.values.prefix}-message-queue-arn"}

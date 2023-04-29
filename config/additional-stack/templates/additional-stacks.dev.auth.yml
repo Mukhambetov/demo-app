@@ -1,0 +1,72 @@
+Resources:
+
+  AuthCognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      Schema:
+        - Name: phone_number
+          AttributeDataType: String
+          Mutable: true
+          Required: false
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: false
+        - Name: family_name
+          AttributeDataType: String
+          Mutable: true
+          Required: false
+        - Name: email
+          AttributeDataType: String
+          Mutable: true
+          Required: false
+        - Name: picture
+          AttributeDataType: String
+          Mutable: true
+          Required: false
+        - Name: country_code
+          AttributeDataType: String
+          Mutable: true
+          Required: false
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 6
+          RequireLowercase: false
+          RequireNumbers: false
+          RequireSymbols: false
+          RequireUppercase: false
+          TemporaryPasswordValidityDays: 15
+      UserPoolName: ${self:custom.values.prefix}-UserPool
+      UserPoolTags:
+        Context: ${self:custom.values.prefix}
+      UsernameAttributes:
+        - phone_number
+      MfaConfiguration: "OFF"
+
+  AuthPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: ${self:custom.values.prefix}-client
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - CUSTOM_AUTH_FLOW_ONLY
+      UserPoolId:
+        Ref: AuthCognitoUserPool
+      RefreshTokenValidity: 365
+
+Outputs:
+  AuthCognitoUserPool:
+    Description: 'Authorization pool id'
+    Value:
+      Ref: AuthCognitoUserPool
+    Export:
+      Name: ${self:custom.values.prefix}-auth-pool-group-id
+
+  AuthCognitoClientId:
+    Description: 'Authorization pool client id'
+    Value:
+      Ref: AuthPoolClient
+    Export:
+      Name: ${self:custom.values.prefix}-auth-client-id

@@ -1,0 +1,41 @@
+Resources:
+
+  ImageRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: ${self:custom.values.prefix}-repo
+      RepositoryPolicyText:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowPushPull
+            Effect: Allow
+            Principal:
+              AWS:
+                - Fn::Join:
+                  - ''
+                  - - 'arn:aws:iam::'
+                    - Ref: AWS::AccountId
+                    - ':user/developer'
+            Action:
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchGetImage
+              - ecr:BatchCheckLayerAvailability
+              - ecr:PutImage
+              - ecr:InitiateLayerUpload
+              - ecr:UploadLayerPart
+              - ecr:CompleteLayerUpload
+      Tags:
+        - Key: Context
+          Value: ${self:custom.values.prefix}
+
+Outputs:
+  DockerImage:
+    Description: "Docker Repository"
+    Value:
+      Fn::Join:
+        - ''
+        - - Ref: AWS::AccountId
+          - .dkr.ecr.us-east-1.amazonaws.com/
+          - Ref: ImageRepository
+    Export:
+      Name: ${self:custom.values.prefix}-docker-image

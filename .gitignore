@@ -1,0 +1,24 @@
+# package directories
+./node_modules
+jspm_packages
+
+#Temporary files
+config/additional-stack/additional-stacks.*.merged.yml
+config/*-stack-output.yml
+#Env files
+.env
+.env.sample
+
+
+# Serverless directories
+.serverless
+
+# Webpack directories
+.webpack
+.idea
+.localstack
+
+.nyc_output
+/.env
+/.env.dev
+/node_modules/

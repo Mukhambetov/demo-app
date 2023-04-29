@@ -1,0 +1,196 @@
+openapi: 3.0.0
+info:
+  title: Bike Rental API
+  version: 1.0.0
+  description: API для системы аренды велосипедов
+
+servers:
+  - url: https://api.example.com/v1
+
+paths:
+  /bikes:
+    get:
+      tags:
+        - Велосипеды
+      summary: Список доступных велосипедов
+      parameters:
+        - $ref: '#/components/parameters/UpperLeftLatQuery'
+        - $ref: '#/components/parameters/UpperLeftLngQuery'
+        - $ref: '#/components/parameters/LowerRightLatQuery'
+        - $ref: '#/components/parameters/LowerRightLngQuery'
+      responses:
+        200:
+          description: "Success - requested bikes"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaDataPaging'
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Bike'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Forbidden'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  parameters:
+    UpperLeftLatQuery:
+      in: query
+      name: upperLeftLat
+      schema:
+        type: number
+        format: double
+      required: true
+      description: Широта верхнего левого угла области видимости карты
+    UpperLeftLngQuery:
+      in: query
+      name: upperLeftLng
+      schema:
+        type: number
+        format: double
+      required: true
+      description: Долгота верхнего левого угла области видимости карты
+    LowerRightLatQuery:
+      in: query
+      name: lowerRightLat
+      schema:
+        type: number
+        format: double
+      required: true
+      description: Широта нижнего правого угла области видимости карты
+    LowerRightLngQuery:
+      in: query
+      name: lowerRightLng
+      schema:
+        type: number
+        format: double
+      required: true
+      description: Долгота нижнего правого угла области видимости карты
+  schemas:
+    Bike:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор велосипеда
+        bike_type:
+          type: string
+          description: Тип велосипеда
+        last_known_location:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: ['Point']
+            coordinates:
+              type: array
+              items:
+                type: number
+                format: double
+              minItems: 2
+              maxItems: 2
+          description: Последнее известное местоположение велосипеда в формате GeoJSON
+        is_rented:
+          type: boolean
+          description: Статус аренды велосипеда (true - в аренде, false - свободен)
+        created_at:
+          type: string
+          format: date-time
+          description: Дата и время создания записи о велосипеде
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата и время последнего обновления записи о велосипеде
+      required:
+        - id
+        - bike_type
+        - last_known_location
+        - is_rented
+
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        errorMessage:
+          type: string
+          description: Error message with futher details.
+        errorCode:
+          type: string
+          description: Error code.
+    MetaDataPaging:
+      type: object
+      description: "Common meta data for pagination"
+      required:
+        - page
+        - pageSize
+        - totalPages
+        - totalSize
+      properties:
+        page:
+          type: integer
+          description: "Current page number."
+          example: 0
+        pageSize:
+          type: integer
+          description: "The used page size."
+          example: 15
+        totalPages:
+          type: integer
+          description: "Total pages with applied filters."
+          example: 3
+        totalSize:
+          type: integer
+          description: "Total records with applied filters."
+          example: 37
+
+  responses:
+    BadRequest:
+      description: Bad Request response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Unauthorized response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: This response means you do not have access to a specified resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: This response means taht specified resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Internal Server Error response.
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: [ ]

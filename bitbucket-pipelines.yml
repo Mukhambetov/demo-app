@@ -1,0 +1,33 @@
+image: atlassian/default-image:3
+
+pipelines:
+  default:
+    - step:
+        name: Test
+        script:
+          - docker run -e MYSQL_DB=db -e MYSQL_PASSWORD=password -e MYSQL_USER=user -p 3306:3306 -d --name db mysql
+          - echo "Run test"
+          - docker stop db
+        services:
+          - docker
+        image: node:14-alpine
+  branches:
+    master:
+      - step:
+          name: Test on after merge
+          script:
+#            - docker run -e MYSQL_DB=db -e MYSQL_PASSWORD=password -e MYSQL_USER=user -p 3306:3306 -d --name db mysql
+            - echo "Run test"
+ #           - docker stop db
+          services:
+            - docker
+          image: node:14-alpine
+      - step:
+          name: 'Deployment to Production'
+          deployment: production
+#          trigger: 'manual'
+          script:
+            - apt-get update && apt-get install -y awscli
+            - make update
+          services:
+            - docker

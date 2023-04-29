@@ -1,0 +1,100 @@
+Resources:
+
+  EIP1:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain:
+        Ref: EcsVpc
+
+  EIP2:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain:
+        Ref: EcsVpc
+
+  LoadBalancer:
+    DependsOn:
+      - EIP2
+      - EIP1
+      - EcsVpc
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: ${self:custom.values.prefix}-LoadBalancer
+      LoadBalancerAttributes:
+        - Key: 'deletion_protection.enabled'
+          Value: true
+      SecurityGroups:
+        - Ref: EcsSecurityGroup
+      SubnetMappings:
+        - SubnetId:
+            Ref: EcsSubnet1
+        - SubnetId:
+            Ref: EcsSubnet2
+      Type: application
+      IpAddressType: ipv4
+      Tags:
+        - Key: Context
+          Value: ${self:custom.values.prefix}
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: ${self:custom.values.prefix}-TargetGroup
+      Port: 8080
+      Protocol: HTTP
+      TargetType: ip
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '20'
+      VpcId:
+        Ref: EcsVpc
+
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn:
+            Ref: TargetGroup
+      LoadBalancerArn:
+        Ref: LoadBalancer
+      Port: 443
+      Protocol: HTTPS
+      SslPolicy: ELBSecurityPolicy-2016-08
+      Certificates:
+        - CertificateArn:
+            Ref: ApiCert
+
+Outputs:
+
+  EIP1Ip:
+    Description: "Eip 1 ip address"
+    Value:
+      Ref: EIP1
+    Export:
+      Name: ${self:custom.values.prefix}-eip1-ip
+
+  EIP1AllocationId:
+    Description: "Eip 1 ip address"
+    Value:
+      Fn::GetAtt:
+        - EIP1
+        - AllocationId
+    Export:
+      Name: ${self:custom.values.prefix}-eip1-allocation-id
+
+  EIP2Ip:
+    Description: "Eip 2 ip address"
+    Value:
+      Ref: EIP2
+    Export:
+      Name: ${self:custom.values.prefix}-eip2-ip
+
+  EIP2AllocationId:
+    Description: "Eip 2 ip address"
+    Value:
+      Fn::GetAtt:
+        - EIP2
+        - AllocationId
+    Export:
+      Name: ${self:custom.values.prefix}-eip2-allocation-id
