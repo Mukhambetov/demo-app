@@ -47,7 +47,7 @@ const create = async (entity, user) => {
     .create({ id: cUser.User.Username, ...entity, organizationId: user.organizationId });
 };
 
-const get = (id, user) => repository.get({ id, organizationId: user.organizationId });
+const get = (id, user) => repository.get({ id });
 
 const list = (filter, page, pageSize, user) => {
   logger.debug({

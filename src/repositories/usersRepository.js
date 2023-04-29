@@ -1,4 +1,5 @@
 const Repository = require('./crud');
+const knex = require("../db/knex");
 
 const TABLE = 'users';
 const FIELDS = [
@@ -24,6 +25,20 @@ const applyFilter = (filter, query) => {
   }
   return query;
 };
-const repository = new Repository(TABLE, FIELDS, applyFilter);
+
+const extender = (query) => {
+  query.leftJoin('referral_codes as rc', 'rc.user_id', 'users.id')
+      .leftJoin('referral_uses as ru', 'ru.referral_code_id', 'rc.id')
+
+  query.select([
+      knex.raw('CASE WHEN rc IS NOT NULL THEN row_to_json(rc) END as referral_code'),
+      knex.raw('COALESCE(json_agg(ru) FILTER (WHERE ru.id IS NOT NULL), \'[]\') as referral_uses'),
+      ]);
+  query.groupBy([
+    "users.id", "users.phone", "users.name", 'rc'
+  ])
+}
+
+const repository = new Repository(TABLE, FIELDS, applyFilter, extender);
 
 module.exports = repository;

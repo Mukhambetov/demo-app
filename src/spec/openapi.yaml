@@ -8,6 +8,27 @@ servers:
   - url: http://localhost:8080
 
 paths:
+  /v1/profile:
+    get:
+      tags:
+        - Профиль
+      summary: Получить профиль пользователя
+      responses:
+        200:
+          description: Успешно - данные профиля пользователя
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                   data:
+                    $ref: '#/components/schemas/User'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        500:
+          $ref: '#/components/responses/InternalServerError'
   /v1/bikes:
     get:
       tags:
@@ -147,6 +168,57 @@ components:
         - bike_type
         - last_known_location
         - is_rented
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        referralCode:
+          $ref: '#/components/schemas/ReferralCode'
+      required:
+        - id
+        - email
+        - createdAt
+        - updatedAt
+
+    ReferralCode:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        code:
+          type: string
+        userId:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - code
+        - userId
+        - createdAt
+        - updatedAt
 
     Error:
       type: object

@@ -23,10 +23,10 @@ const applyFilter = (filter, query) => {
                 this.on('bikes.id', 'rentals.bike_id').andOnNull('rentals.end_time');
             })
                 .whereRaw('bikes.last_known_location && ST_MakeEnvelope(?, ?, ?, ?, 4326)', [
-                    location.upperLeftLng,
-                    location.upperLeftLat,
-                    location.lowerRightLng,
-                    location.lowerRightLat
+                    filter.location.upperLeftLng,
+                    filter.location.upperLeftLat,
+                    filter.location.lowerRightLng,
+                    filter.location.lowerRightLat
                 ])
                 .andWhere(function () {
                     this.whereNull('rentals.id').orWhereNotNull('rentals.end_time');
