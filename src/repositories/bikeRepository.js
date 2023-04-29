@@ -4,9 +4,10 @@ const knex = require("../db/knex");
 const TABLE = 'bikes';
 const FIELDS = [
     'bikes.id',
-    'bikes.status',
-    'bikes.type',
+    'bikes.bike_type',
     'bikes.last_known_location',
+    'bikes.created_at',
+    'bikes.updated_at',
 ];
 
 const applyFilter = (filter, query) => {
@@ -35,6 +36,12 @@ const applyFilter = (filter, query) => {
     return query;
 };
 
-const repository = new Repository(TABLE, FIELDS, applyFilter);
+const extender = (query) => {
+    query.select(
+        knex.raw('ST_AsGeoJSON(last_known_location)::json as last_known_location')
+    )
+}
+
+const repository = new Repository(TABLE, FIELDS, applyFilter, extender);
 
 module.exports = repository;

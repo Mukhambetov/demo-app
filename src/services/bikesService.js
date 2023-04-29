@@ -8,10 +8,10 @@ class BikeService {
 
         if (upperLeftLat && upperLeftLng && lowerRightLat && lowerRightLng) {
             queryFilter.location = {
-                minLat: parseFloat(upperLeftLat),
-                maxLat: parseFloat(lowerRightLat),
-                minLng: parseFloat(upperLeftLng),
-                maxLng: parseFloat(lowerRightLng),
+                upperLeftLat: parseFloat(upperLeftLat),
+                lowerRightLat: parseFloat(lowerRightLat),
+                upperLeftLng: parseFloat(upperLeftLng),
+                lowerRightLng: parseFloat(lowerRightLng),
             };
         }
 
@@ -30,10 +30,10 @@ class BikeService {
 
         if (upperLeftLat && upperLeftLng && lowerRightLat && lowerRightLng) {
             queryFilter.location = {
-                minLat: parseFloat(upperLeftLat),
-                maxLat: parseFloat(lowerRightLat),
-                minLng: parseFloat(upperLeftLng),
-                maxLng: parseFloat(lowerRightLng),
+                upperLeftLat: parseFloat(upperLeftLat),
+                lowerRightLat: parseFloat(lowerRightLat),
+                upperLeftLng: parseFloat(upperLeftLng),
+                lowerRightLng: parseFloat(lowerRightLng),
             };
         }
 

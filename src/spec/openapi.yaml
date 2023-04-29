@@ -5,10 +5,10 @@ info:
   description: API для системы аренды велосипедов
 
 servers:
-  - url: https://api.example.com/v1
+  - url: http://localhost:8080
 
 paths:
-  /bikes:
+  /v1/bikes:
     get:
       tags:
         - Велосипеды
@@ -40,9 +40,40 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         500:
           $ref: '#/components/responses/InternalServerError'
+  /v1/bikes/{id}:
+    get:
+      tags:
+        - Велосипеды
+      summary: Получить информацию о велосипеде по ID
+      parameters:
+        - $ref: '#/components/parameters/BikeId'
+      responses:
+        200:
+          description: "Success - requested bikes"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Bike'
 
+        400:
+          $ref: '#/components/responses/BadRequest'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalServerError'
 components:
   parameters:
+    BikeId:
+      name: id
+      in: path
+      description: ID велосипеда
+      required: true
+      schema:
+        type: string
+        format: uuid
     UpperLeftLatQuery:
       in: query
       name: upperLeftLat
