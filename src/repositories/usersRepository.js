@@ -1,16 +1,18 @@
 const Repository = require('./crud');
-const knex = require("../db/knex");
+const knex = require('../db/knex');
 
 const TABLE = 'users';
 const FIELDS = [
   'users.id',
   'users.phone',
   'users.name',
+  'users.terms_accepted',
 ];
 /**
  *
  * @param filter
  * @param filter.phone {string} - phone contains substring
+ * @param filter.name {string} - name contains substring
  * @param query
  * @return {*}
  */
@@ -26,18 +28,31 @@ const applyFilter = (filter, query) => {
   return query;
 };
 
+/**
+ * @param query {Knex.QueryBuilder}
+ */
 const extender = (query) => {
+  query.with('active_rentals', (qb) => {
+    qb.table('rentals')
+      .select('*')
+      .whereNull('rentals.end_time')
+      .whereNull('rentals.end_location');
+  });
   query.leftJoin('referral_codes as rc', 'rc.user_id', 'users.id')
-      .leftJoin('referral_uses as ru', 'ru.referral_code_id', 'rc.id')
+    .leftJoin('referral_uses as ru', 'ru.referral_code_id', 'rc.id')
+    .leftJoin('payment_methods as pm', 'pm.user_id', 'users.id')
+    .leftJoin('active_rentals as ar', 'ar.user_id', 'users.id');
 
   query.select([
-      knex.raw('CASE WHEN rc IS NOT NULL THEN row_to_json(rc) END as referral_code'),
-      knex.raw('COALESCE(json_agg(ru) FILTER (WHERE ru.id IS NOT NULL), \'[]\') as referral_uses'),
-      ]);
+    knex.raw('CASE WHEN rc IS NOT NULL THEN row_to_json(rc) END as referral_code'),
+    knex.raw('COALESCE(json_agg(ru) FILTER (WHERE ru IS NOT NULL), \'[]\') as referral_uses'),
+    knex.raw('COALESCE(json_agg(pm) FILTER (WHERE pm IS NOT NULL), \'[]\') as payment_methods'),
+    knex.raw('COALESCE(json_agg(ar) FILTER (WHERE ar IS NOT NULL), \'[]\') as active_rentals'),
+  ]);
   query.groupBy([
-    "users.id", "users.phone", "users.name", 'rc'
-  ])
-}
+    'users.id', 'users.phone', 'users.name', 'rc',
+  ]);
+};
 
 const repository = new Repository(TABLE, FIELDS, applyFilter, extender);
 

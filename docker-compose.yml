@@ -2,7 +2,6 @@ version: '3'
 services:
 
   postgres:
-#    image: gangstead/postgis:13-3.1-arm
     image: mdillon/postgis
     restart: on-failure
     container_name: postgresql.bike-sharing.local
@@ -12,3 +11,24 @@ services:
       POSTGRES_PASSWORD: master
     ports:
       - 5432:5432
+    networks:
+      - node-red-net
+
+  node-red:
+    image: nodered/node-red:latest
+    environment:
+      - TZ=Europe/Amsterdam
+    ports:
+      - "1880:1880"
+    networks:
+      - node-red-net
+    volumes:
+      - node-red-data:/data
+    depends_on:
+      - postgres
+
+volumes:
+  node-red-data:
+
+networks:
+  node-red-net:

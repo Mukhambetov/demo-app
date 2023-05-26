@@ -10,18 +10,16 @@ const logger = require('./helpers/logger');
 const { koaLogger } = require('./helpers/logger');
 const error = require('./middleware/error');
 const user = require('./middleware/user');
-const permissions = require('./middleware/permission');
 const knex = require('./db/knex');
 
 const rootRoutes = require('./routes/root');
 const apiRoutes = require('./routes');
 const mock = require('./services/mock');
 
-const port = process.env.PORT || 8080;
-const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
-const userPoolId = process.env.USER_POOL;
-const iss = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}`;
-const url = `${iss}/.well-known/jwks.json`;
+const { FIREBASE_PROJECT_ID, PORT = 8080 } = process.env;
+
+const url = `https://securetoken.google.com/${FIREBASE_PROJECT_ID}/x509`;
+const iss = `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`;
 
 module.exports.AppServer = class AppServer {
   constructor() {
@@ -67,7 +65,7 @@ module.exports.AppServer = class AppServer {
         },
       },
     });
-    this.app.use(os);
+    // this.app.use(os);
     const publicRouter = new Router();
     rootRoutes(publicRouter);
     this.app.use(publicRouter.routes()).use(publicRouter.allowedMethods());
@@ -88,7 +86,6 @@ module.exports.AppServer = class AppServer {
       }));
     }
     privateRouter.use(user);
-    privateRouter.use(permissions);
     apiRoutes(privateRouter);
 
     this.app.use(privateRouter.routes()).use(privateRouter.allowedMethods());
@@ -120,15 +117,16 @@ module.exports.AppServer = class AppServer {
         return knex.seed.run();
       })
       .then(() => new Promise((resolve) => {
-        this.app.listen(port, () => {
-          logger.info('Server started on port %d', port);
+        this.app.listen(PORT, () => {
+          logger.info('Server started on port %d', PORT);
           resolve(this.app);
         });
-      })).then(() => this.app)
-        .then(() => {
-          // Выполняем функцию каждые 10 секунд (10000 миллисекунд)
-          setInterval(mock.insertRandomBikeMovement, 5000);
-        });
+      }))
+      .then(() => this.app)
+      .then(() => {
+        // Выполняем функцию каждые 10 секунд (10000 миллисекунд)
+        setInterval(mock.insertRandomBikeMovement, 5000);
+      });
     return this.appPromise;
   }
 

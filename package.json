@@ -17,6 +17,10 @@
     "ajv-errors": "^3.0.0",
     "aws-sdk": "^2.863.0",
     "axios": "^0.21.4",
+    "chai": "^4.3.4",
+    "firebase": "^9.21.0",
+    "firebase-admin": "^11.7.0",
+    "firebase-functions": "^3.18.0",
     "humps": "^2.0.1",
     "js-yaml": "^4.1.0",
     "json-schema-ref-parser": "^9.0.9",
@@ -35,8 +39,7 @@
     "node-cache": "^5.1.2",
     "node-xlsx": "^0.21.0",
     "pg": "^8.7.1",
-    "pino": "^7.6.3",
-    "chai": "^4.3.4"
+    "pino": "^7.6.3"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.89",

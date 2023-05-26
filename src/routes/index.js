@@ -1,8 +1,33 @@
 const userRoutes = require('./users');
 const bikesRoutes = require('./bikes');
-
+const bikeTypesRoutes = require('./bikeTypesRouter');
+const deviceStatesHistoryRoutes = require('./deviceStatesHistoryRouter');
+const deviceStatesRoutes = require('./deviceStatesRouter');
+const insurancePlansRoutes = require('./insurancePlansRouter');
+const parkingZonesRoutes = require('./parkingZonesRouter');
+const promoCodesRoutes = require('./promoCodesRouter');
+const promoCodeUsesRoutes = require('./promoCodeUsesRouter');
+const referralCodesRoutes = require('./referralCodesRouter');
+const referralUsesRoutes = require('./referralUsesRouter');
+const rentalsRoutes = require('./rentalsRouter');
+const ridingZonesRoutes = require('./ridingZonesRouter');
+const tariffPlansRoutes = require('./tariffPlansRouter');
+const usersRoutes = require('./usersRouter');
 
 module.exports = (router) => {
   userRoutes(router);
   bikesRoutes(router);
+  bikeTypesRoutes(router);
+  deviceStatesHistoryRoutes(router);
+  deviceStatesRoutes(router);
+  insurancePlansRoutes(router);
+  parkingZonesRoutes(router);
+  promoCodesRoutes(router);
+  promoCodeUsesRoutes(router);
+  referralCodesRoutes(router);
+  referralUsesRoutes(router);
+  rentalsRoutes(router);
+  ridingZonesRoutes(router);
+  tariffPlansRoutes(router);
+  usersRoutes(router);
 };

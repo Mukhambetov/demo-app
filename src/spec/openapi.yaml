@@ -85,6 +85,136 @@ paths:
           $ref: '#/components/responses/NotFound'
         500:
           $ref: '#/components/responses/InternalServerError'
+  /v1/bike-types:
+    get:
+      tags:
+        - Bike Types
+      summary: Получить список типов велосипедов
+      responses:
+        200:
+          description: Успешно - список типов велосипедов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BikeType'  # You will need to define this schema
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/bike-types/{id}:
+    get:
+      tags:
+        - Bike Types
+      summary: Получить тип велосипеда по ID
+      parameters:
+        - $ref: '#/components/parameters/BikeTypeId'  # You will need to define this parameter
+      responses:
+        200:
+          description: Успешно - тип велосипеда
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BikeType'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+        - Bike Types
+      summary: Обновить тип велосипеда по ID
+      parameters:
+        - $ref: '#/components/parameters/BikeTypeId'
+      responses:
+        200:
+          description: Успешно - тип велосипеда обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BikeType'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - Bike Types
+      summary: Удалить тип велосипеда по ID
+      parameters:
+        - $ref: '#/components/parameters/BikeTypeId'
+      responses:
+        204:
+          description: Успешно - тип велосипеда удален
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+  /v1/device-states-history:
+    get:
+      tags:
+        - Device States History
+      summary: Получить историю состояний устройства
+      responses:
+        200:
+          description: Успешно - история состояний устройства
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeviceStateHistory'  # You will need to define this schema
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/device-states-history/{id}:
+    get:
+      tags:
+        - Device States History
+      summary: Получить состояние устройства по ID
+      parameters:
+        - $ref: '#/components/parameters/DeviceStateHistoryId'  # You will need to define this parameter
+      responses:
+        200:
+          description: Успешно - состояние устройства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceStateHistory'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+        - Device States History
+      summary: Обновить состояние устройства по ID
+      parameters:
+        - $ref: '#/components/parameters/DeviceStateHistoryId'
+      responses:
+        200:
+          description: Успешно - состояние устройства обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceStateHistory'
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - Device States History
+      summary: Удалить состояние устройства по ID
+      parameters:
+        - $ref: '#/components/parameters/DeviceStateHistoryId'
+      responses:
+        204:
+          description: Успешно - состояние устройства удалено
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalServerError'
 components:
   parameters:
     BikeId:
@@ -95,6 +225,21 @@ components:
       schema:
         type: string
         format: uuid
+    BikeTypeId:
+      name: id
+      in: path
+      description: ID велосипеда
+      required: true
+      schema:
+        type: string
+        format: uuid
+    DeviceStateHistoryId:
+      name: id
+      in: path
+      description: ID велосипеда
+      required: true
+      schema:
+        type: string
     UpperLeftLatQuery:
       in: query
       name: upperLeftLat
@@ -102,6 +247,7 @@ components:
         type: number
         format: double
       required: true
+      example: '43'
       description: Широта верхнего левого угла области видимости карты
     UpperLeftLngQuery:
       in: query
@@ -110,6 +256,7 @@ components:
         type: number
         format: double
       required: true
+      example: '76'
       description: Долгота верхнего левого угла области видимости карты
     LowerRightLatQuery:
       in: query
@@ -118,6 +265,7 @@ components:
         type: number
         format: double
       required: true
+      example: '44'
       description: Широта нижнего правого угла области видимости карты
     LowerRightLngQuery:
       in: query
@@ -126,6 +274,7 @@ components:
         type: number
         format: double
       required: true
+      example: '77'
       description: Долгота нижнего правого угла области видимости карты
   schemas:
     Bike:
@@ -219,7 +368,54 @@ components:
         - userId
         - createdAt
         - updatedAt
+    DeviceStateHistory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор истории состояния устройства
+        device_id:
+          type: string
+          format: uuid
+          description: Идентификатор устройства
+        state:
+          type: string
+          description: Состояние устройства
+        created_at:
+          type: string
+          format: date-time
+          description: Дата и время создания записи
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата и время последнего обновления записи
+      required:
+        - id
+        - device_id
+        - state
 
+    BikeType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор типа велосипеда
+        name:
+          type: string
+          description: Название типа велосипеда
+        created_at:
+          type: string
+          format: date-time
+          description: Дата и время создания записи
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата и время последнего обновления записи
+      required:
+        - id
+        - name
     Error:
       type: object
       required:

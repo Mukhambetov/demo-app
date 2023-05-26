@@ -1,69 +1,34 @@
 exports.seed = async function (knex) {
   // Deletes ALL existing entries
-  await knex("rentals").del();
-  await knex("promo_codes").del();
-  await knex("referral_uses").del();
-  await knex("referral_codes").del();
-  await knex("tariffs").del();
-  await knex("users").del();
-  await knex("bike_movements").del();
-  await knex("bikes").del();
-  await knex("parking_zones").del();
-  await knex("riding_zones").del();
+  await knex('rentals').del();
+  await knex('promo_codes').del();
+  await knex('referral_uses').del();
+  await knex('referral_codes').del();
+  await knex('users').del();
+  await knex('bikes').del();
+  await knex('parking_zones').del();
+  await knex('riding_zones').del();
 
-  // Insert seed data
-  await knex("bikes").insert([
-    {
-      bike_type: "simple",
-      last_known_location: knex.raw("ST_SetSRID(ST_MakePoint(30.12345, 50.12345), 4326)"),
-      is_rented: false,
-    },
-    // ... other bikes
-  ]);
-
-  await knex("users").insert([
+  await knex('users').insert([
     {
       id: '842a747d-8b53-4465-9d4c-fd163d9c470c',
-      phone: "1234567890",
-      name: "John Doe",
+      phone: '1234567890',
+      name: 'John Doe',
     },
     // ... other users
   ]);
 
-  await knex("tariffs").insert([
+  await knex('promo_codes').insert([
     {
-      bike_type: "simple",
-      minutes: 5,
-      cost: 0,
-      is_active: true,
-    },
-    // ... other tariffs
-  ]);
-
-  await knex("promo_codes").insert([
-    {
-      code: "PROMO10",
-      discount_type: "percentage",
+      code: 'PROMO10',
+      discount_type: 'percentage',
       discount_value: 10,
-      start_time: "2023-01-01T00:00:00Z",
-      end_time: "2023-12-31T23:59:59Z",
+      start_time: '2023-01-01T00:00:00Z',
+      end_time: '2023-12-31T23:59:59Z',
     },
   ]);
 
-/*  await knex("referral_codes").insert([
-    {
-      code: "REFER123",
-      user_id: "abcd1234-abcd-1234-abcd-123456789abd",
-      reward_amount: 100,
-    },
-    // ... other referral codes
-  ]);*/
-
-  // Add seed data for other tables: parking_zones, riding_zones, etc.
-
-  // ...
-
-// Insert parking_zones
+  // Insert parking_zones
   await knex('parking_zones').insert([
     {
       name: 'Алматы парковка 1',
@@ -71,7 +36,7 @@ exports.seed = async function (knex) {
     },
   ]);
 
-// Insert riding_zones
+  // Insert riding_zones
   await knex('riding_zones').insert([
     {
       name: 'Алматы район 1',
@@ -79,4 +44,102 @@ exports.seed = async function (knex) {
     },
   ]);
 
+  // Удаляем существующие записи
+  await knex('tariff_plans').del();
+  await knex('bike_types').del();
+
+  // Вставляем записи для bike_types
+  const bikeTypes = await knex('bike_types').insert([
+    { type: 'simple', name: 'Эконом' },
+    { type: 'eco', name: 'Эко' },
+    { type: 'electra', name: 'Электро' },
+  ]).returning('*');
+
+  // Вставляем записи для tariff_plans
+  await knex('tariff_plans').insert([
+    {
+      bike_type_id: bikeTypes[0].id,
+      tier: 1,
+      start_time: 0,
+      end_time: 5,
+      cost: 0,
+      is_minute_rate: false,
+    },
+    {
+      bike_type_id: bikeTypes[0].id,
+      tier: 2,
+      start_time: 5,
+      end_time: 30,
+      cost: 250,
+      is_minute_rate: false,
+    },
+    {
+      bike_type_id: bikeTypes[0].id,
+      tier: 3,
+      start_time: 30,
+      cost: 10,
+      is_minute_rate: true,
+    },
+
+    {
+      bike_type_id: bikeTypes[1].id,
+      tier: 1,
+      start_time: 0,
+      end_time: 5,
+      cost: 0,
+      is_minute_rate: false,
+    },
+    {
+      bike_type_id: bikeTypes[1].id,
+      tier: 2,
+      start_time: 5,
+      end_time: 30,
+      cost: 300,
+      is_minute_rate: false,
+    },
+    {
+      bike_type_id: bikeTypes[1].id,
+      tier: 3,
+      start_time: 30,
+      end_time: 60,
+      cost: 200,
+      is_minute_rate: false,
+    },
+    {
+      bike_type_id: bikeTypes[1].id,
+      tier: 4,
+      start_time: 60,
+      cost: 2000,
+      is_minute_rate: false,
+    },
+  ]);
+
+  // Inserts seed entries
+  await knex('bikes').insert([
+    {
+      id: '842a747d-8b53-4465-9d4c-fd163d9c470c',
+      bike_number: 'BIKE001',
+      bike_name: 'Green Lightning',
+      bike_type_id: bikeTypes[0].id,
+      last_known_location: knex.raw('ST_SetSRID(ST_Point(0, 0), 4326)'),
+      created_at: new Date(),
+      updated_at: new Date(),
+    },
+    {
+      bike_number: 'BIKE002',
+      bike_name: 'Blue Thunder',
+      bike_type_id: bikeTypes[0].id,
+      last_known_location: knex.raw('ST_SetSRID(ST_Point(0, 0), 4326)'),
+      created_at: new Date(),
+      updated_at: new Date(),
+    },
+    {
+      bike_number: 'BIKE003',
+      bike_name: 'Red Flash',
+      bike_type_id: bikeTypes[0].id,
+      last_known_location: knex.raw('ST_SetSRID(ST_Point(0, 0), 4326)'),
+      created_at: new Date(),
+      updated_at: new Date(),
+    },
+  ]);
 };

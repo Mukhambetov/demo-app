@@ -1,24 +1,18 @@
 {
   "env": {
-    "node": true
+    "node": true,
+    "mocha": true
   },
-  "root": true,
-  "parser": "@typescript-eslint/parser",
-  "extends": [
-    "airbnb-base",
-    "airbnb-typescript/base"
+  "extends": "airbnb-base",
+  "plugins": [
+    "mocha"
   ],
-  "parserOptions": {
-     "project": "./tsconfig.json"
-  },
   "rules": {
     "camelcase": "warn",
-    "lines-between-class-members": 0,
-    "no-underscore-dangle": "off",
-    "class-methods-use-this": "off",
-    "max-classes-per-file": 0,
-    "import/prefer-default-export": 0,
-    "import/no-extraneous-dependencies": 0,
-    "prefer-destructuring": 0
+    "mocha/no-skipped-tests": "warn",
+    "mocha/no-exclusive-tests": "warn",
+    "mocha/no-identical-title": "error",
+    "mocha/no-global-tests": "error",
+    "mocha/max-top-level-suites": ["warn", { "limit": 1 }]
   }
 }
